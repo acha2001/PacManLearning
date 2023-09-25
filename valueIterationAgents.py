@@ -61,8 +61,28 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     def runValueIteration(self):
         # Write value iteration code here
-        "*** YOUR CODE HERE ***"
+        
+        states= self.mdp.getStates()
+        i = 0
 
+        # Set number of iterations
+        while i<self.iterations: 
+            tmp = self.values.copy() # copy of current values
+            for s in states:
+                
+                actions = self.mdp.getPossibleActions(s)
+                values=[]
+                
+                for a in actions:
+                    q_vals=self.computeQValueFromValues(s,a)
+                    values.append(q_vals)
+
+                    if not a:
+                        tmp[s] = 0
+                    else:
+                        tmp[s] = max(values)
+            self.values=tmp
+            i += 1
 
     def getValue(self, state):
         """
@@ -73,13 +93,21 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     def computeQValueFromValues(self, state, action):
         """
-          Compute the Q-value of action in state from the
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
 
+        stateProbs = self.mdp.getTransitionStatesAndProbs(state, action)
 
+        q_val=0
+        for new_s, prob in stateProbs:
+            
+            value = self.getValue(new_s)
+            reward = self.mdp.getReward(state, action, new_s)
 
+            q_val += prob*(reward+self.discount*value)
+
+        return q_val
         util.raiseNotDefined()
 
     def computeActionFromValues(self, state):
@@ -92,6 +120,12 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
+        if self.mdp.isTerminal(state):
+            return None
+        else:
+            actions = self.mdp.getPossibleActions(state)
+            q_value = [(self.getQValue(state, a),a) for a in actions]
+            return max(q_value, key=lambda item:item[0])[1]            
         util.raiseNotDefined()
 
     def getPolicy(self, state):
@@ -153,4 +187,5 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+
 
