@@ -31,6 +31,7 @@ import mdp, util
 from learningAgents import ValueEstimationAgent
 import collections
 
+
 class ValueIterationAgent(ValueEstimationAgent):
     """
         * Please read learningAgents.py before reading this.*
@@ -68,13 +69,14 @@ class ValueIterationAgent(ValueEstimationAgent):
         # Set number of iterations
         while i<self.iterations: 
             tmp = self.values.copy() # copy of current values
+
             for s in states:
-                
+
                 actions = self.mdp.getPossibleActions(s)
                 values=[]
                 
                 for a in actions:
-                    q_vals=self.computeQValueFromValues(s,a)
+                    q_vals = self.computeQValueFromValues(s,a)
                     values.append(q_vals)
 
                     if not a:
@@ -167,7 +169,37 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+       
+        
+        i=0
+        states = self.mdp.getStates()
+        
+        while i<self.iterations:
+            
+            tmp_vals = self.values.copy() # copy of current values
+            state = states[i%len(states)] #grab single states
+            
+            actions = self.mdp.getPossibleActions(state)     
+            values=[]
+            
+            for a in actions:
+                
+                q_vals = self.computeQValueFromValues(state, a)
+                values.append(q_vals)
+                
+                if not a:
+                    tmp_vals[state]=0
+                else:
+                    tmp_vals[state] = max(values)
+           
+            self.values = tmp_vals
+            i+=1
+        
+        states = self.mdp.getStates()
 
+    
+        
+            
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     """
         * Please read learningAgents.py before reading this.*
@@ -187,5 +219,51 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        
+        # calculate the predecessor of every state
+        
+        #dictionary for preds
+        preds = {}
+        states = self.mdp.getStates
+        for s in states :
+            preds[s] = set(); # initialize to a set
+        
+        for s in states:
+         
+            actions =  self.mdp.getPossibleActions(state)
+            for a in actions:
+                
+                transitions = self.mdp.getTransitionStatesAndProbs(s,a)
+                # find possible next of current state given action
+                for next, prob in transitions:
+                    if prob > 0:
+                        # update preds of next to add new predecessor
+                        preds[next].add(s)
+
+        # intializing an empty pq
+        q = util.PriorityQueue()
+        
+        # for each non terminal state calcuate the |dif| of
+        # and the hightest q accross all possible actions
+        for s in states: 
+            # check if state is terminal
+            # else there will be actions other then exit
+            if not self.mdp.isTerminal(s):
+                # first find the value
+                value = (self.getValue(s))
+                
+                # find the max Q accross all Actions
+                actions=self.mdp.getPossibleActions(s)
+                q_values = []
+                for a in actions:
+                    q_values.append(self.computeQValueFromValues(s, a))
+                
+                    
+                
+
+
+
+
+
 
 
