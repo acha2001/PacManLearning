@@ -220,49 +220,106 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
         
-        # calculate the predecessor of every state
-        
-        #dictionary for preds
-        preds = {}
-        states = self.mdp.getStates
-        for s in states :
-            preds[s] = set(); # initialize to a set
-        
+        predecessorsOfAllStates = {}
+        states = self.mdp.getStates()
+        # populate the dictionary with predecessors of each state
         for s in states:
-         
-            actions =  self.mdp.getPossibleActions(state)
-            for a in actions:
-                
-                transitions = self.mdp.getTransitionStatesAndProbs(s,a)
-                # find possible next of current state given action
-                for next, prob in transitions:
-                    if prob > 0:
-                        # update preds of next to add new predecessor
-                        preds[next].add(s)
+          predecessorsOfAllStates[s] = self.getPredecessors(s)
 
-        # intializing an empty pq
-        q = util.PriorityQueue()
-        
-        # for each non terminal state calcuate the |dif| of
-        # and the hightest q accross all possible actions
-        for s in states: 
-            # check if state is terminal
-            # else there will be actions other then exit
+        theQueue = util.PriorityQueue() #initialize an empty priority Queue
+
+        for s in states:
+          if not self.mdp.isTerminal(s):
+            highestQ = self.highestQValue(s) #get the highest Q value resulted from all available actions from s
+            diff = abs(self.values[s] - highestQ) #get the absolute value diff
+            theQueue.update(s, -diff) #push s onto priority Queue with priority -diff, update its priority if needed
+
+
+        for i in range(self.iterations):
+          #if queue is empty, terminate
+          if theQueue.isEmpty():
+            # print "avgTime: " + str(avgTime2/i) #for Q5
+            return
+
+          state = theQueue.pop()  #pop a state out
+          self.values[state] = self.highestQValue(state) #update the value
+
+          for p in list(predecessorsOfAllStates[state]):
+            highestQ = self.highestQValue(p) #get the highest Q value resulted from all available actions from p
+            diff = abs(self.values[p] - highestQ) #get the absolute value diff
+
+            if diff > self.theta:
+              theQueue.update(p, -diff) #push p into the priority queue with priority -diff
+
+                
+
+
+
+
+
+    def highestQValue(self, state):
+        # probs able to make this more effecient aswell
+        """
+          return the highest Q-value based on all possible actions of state
+        """
+        resultQ = float('-inf')
+        actions = self.mdp.getPossibleActions(state)
+        if len(actions) == 0:
+            return None
+
+        for a in actions:
+            transition = self.mdp.getTransitionStatesAndProbs(state, a)
+            Q = 0.0
+
+            for nextState in transition:
+              Q += nextState[1] * (self.mdp.getReward(state, a, nextState[0]) + self.discount * self.getValue(nextState[0]))
+
+            if Q > resultQ:
+                resultQ = self.computeQValueFromValues(state, a)
+        return resultQ
+
+
+    def getPredecessors(self, state):
+        # this is an ugly ass function I need to fix
+        """
+          return a set containing all predecessors of state
+        """
+
+        predecessorSet = set()
+
+        if not self.mdp.isTerminal(state):
+          states = self.mdp.getStates()
+          
+          for s in states:
             if not self.mdp.isTerminal(s):
-                # first find the value
-                value = (self.getValue(s))
-                
-                # find the max Q accross all Actions
-                actions=self.mdp.getPossibleActions(s)
-                q_values = []
-                for a in actions:
-                    q_values.append(self.computeQValueFromValues(s, a))
-                
-                    
-                
+              if 'south' in self.mdp.getPossibleActions(s):
+                transition = self.mdp.getTransitionStatesAndProbs(s, 'south')
+                for nextState in transition:
+                  if (nextState[0] == state) and (nextState[1] > 0):
+                    predecessorSet.add(s)
 
+            if not self.mdp.isTerminal(s):
+              if 'north' in self.mdp.getPossibleActions(s):
+                transition = self.mdp.getTransitionStatesAndProbs(s, 'north')
+                for nextState in transition:
+                  if (nextState[0] == state) and (nextState[1] > 0):
+                    predecessorSet.add(s)
 
+            if not self.mdp.isTerminal(s):
+              if 'east' in self.mdp.getPossibleActions(s):
+                transition = self.mdp.getTransitionStatesAndProbs(s, 'east')
+                for nextState in transition:
+                  if (nextState[0] == state) and (nextState[1] > 0):
+                    predecessorSet.add(s)
 
+            if not self.mdp.isTerminal(s):
+              if 'west' in self.mdp.getPossibleActions(s):
+                transition = self.mdp.getTransitionStatesAndProbs(s, 'west')
+                for nextState in transition:
+                  if (nextState[0] == state) and (nextState[1] > 0):
+                    predecessorSet.add(s)
+         
+        return predecessorSet
 
 
 
