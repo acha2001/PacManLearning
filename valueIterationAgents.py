@@ -89,9 +89,9 @@ class ValueIterationAgent(ValueEstimationAgent):
         value function stored in self.values.
       """
       "*** YOUR CODE HERE ***"
-      stateProbs = self.mdp.getTransitionStatesAndProbs(state, action)
+      transitions = self.mdp.getTransitionStatesAndProbs(state, action)
       q_val=0
-      for new_s, prob in stateProbs:
+      for new_s, prob in transitions:
           
           value = self.getValue(new_s)
           reward = self.mdp.getReward(state, action, new_s)
@@ -166,13 +166,14 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
         
         for a in actions:
             
+            
+            
+          if not a:
+            tmp_vals[state]=0
+          else:
             q_vals = self.computeQValueFromValues(state, a)
             values.append(q_vals)
-            
-            if not a:
-                tmp_vals[state]=0
-            else:
-                tmp_vals[state] = max(values)
+            tmp_vals[state] = max(values)
         
         self.values = tmp_vals
           
@@ -201,12 +202,9 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
-        
-        predecessors = {}
-        states = self.mdp.getStates()
-        # populate the dictionary with predecessors of each state
-        
         predecessors = self.getPredecessors()
+        
+        states = self.mdp.getStates()
 
         q = util.PriorityQueue() #initialize an empty priority Queue
 
@@ -215,13 +213,11 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                 diff = abs(self.values[s] - self.maxQValue(s)) #get the absolute value diff
                 q.update(s, -diff) #push s onto priority Queue with priority -diff, update its priority if needed
 
-
         for i in range(self.iterations):   
           if q.isEmpty(): # base case
             return
 
           state = q.pop()  
-     
           self.values[state] = self.maxQValue(state) 
 
           for pred in list(predecessors[state]):
@@ -230,15 +226,12 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
 
     def maxQValue(self, state):
-
+        actions = self.mdp.getPossibleActions(state)    
         
-        actions = self.mdp.getPossibleActions(state)
-       
         if not actions:
             return None
 
         Q_vals = []
-        
         for a in actions:
             Q_vals.append(self.computeQValueFromValues(state, a))
             
@@ -246,13 +239,8 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
 
     def getPredecessors(self):
-        # this is an ugly ass function I need to fix
-        """
-          return a set containing all predecessors of state
-        """
-
-        predecessors = {}
         
+        predecessors = {}
         states = self.mdp.getStates()
         
         # create a set for each state
@@ -266,9 +254,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
            for a in actions:
               # Find each possible child state from each action
               for childState, prob in self.mdp.getTransitionStatesAndProbs(s,a):  
-                newPreds= predecessors[childState]
-                newPreds.add(s)
-                predecessors[childState] = newPreds
+                predecessors[childState].add(s)
 
         return predecessors
 
