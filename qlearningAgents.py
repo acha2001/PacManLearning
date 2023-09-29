@@ -92,7 +92,8 @@ class QLearningAgent(ReinforcementAgent):
         possible_actions = []
         
         for action in actions:
-          if self.getQValue(state,action) >= value or self.getQValue(state,action) == 0.0:
+          if self.getQValue(state,action) >= value or self.getQValue(state,action) == 0.0: # this is less effecient for the test case but I think it could be usfull in some cases
+          #if self.getQValue(state,action) >= value: 
             possible_actions.append(action)
 
         if not possible_actions: 
