@@ -115,9 +115,9 @@ class QLearningAgent(ReinforcementAgent):
           HINT: To pick randomly from a list, use random.choice(list)
         """
 
-        if util.flipCoin(self.epsilon):
+        if util.flipCoin(self.epsilon): # epsilon % of time will do a random action
           return random.choice(self.getLegalActions(state))
-        else:
+        else: # else just get the policy which will be a random choose of either 0 values or values greater then or equal to current value
           return self.getPolicy(state)
 
     
@@ -199,7 +199,7 @@ class ApproximateQAgent(PacmanQAgent):
     def __init__(self, extractor='IdentityExtractor', **args):
         self.featExtractor = util.lookup(extractor, globals())()
         PacmanQAgent.__init__(self, **args)
-        self.weights = util.Counter()
+        self.weights = util.Counter({})
 
     def getWeights(self):
         return self.weights
@@ -210,6 +210,12 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
+        features = self.featExtractor.getFeatures(state, action)
+        result = 0
+        
+        for feature in features:
+            result += self.weights[feature] * features[feature]
+        return result
         util.raiseNotDefined()
 
     def update(self, state, action, nextState, reward):
@@ -217,7 +223,11 @@ class ApproximateQAgent(PacmanQAgent):
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        features = self.featExtractor.getFeatures(state, action)
+        correction = reward + self.discount*self.getValue(nextState) - self.getQValue(state, action)
+        for feature in features:
+            self.weights[feature] += self.alpha * correction * features[feature]
+
 
     def final(self, state):
         "Called at the end of each game."
